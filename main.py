@@ -114,6 +114,12 @@ def download(url: str, mode: str, playlist: bool) -> None:
                     "preferredquality": "0",
                 },
                 {
+                    # Embeds title, artist (uploader), year, genre from yt-dlp
+                    # info dict into the MP3's ID3 tags via FFmpeg.
+                    "key": "FFmpegMetadata",
+                    "add_metadata": True,
+                },
+                {
                     "key": "EmbedThumbnail",
                 },
             ],
