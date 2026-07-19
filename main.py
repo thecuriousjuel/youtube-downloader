@@ -106,12 +106,16 @@ def download(url: str, mode: str, playlist: bool) -> None:
         options = {
             **common,
             "format": "bestaudio/best",
+            "writethumbnail": True,
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
                     "preferredquality": "0",
-                }
+                },
+                {
+                    "key": "EmbedThumbnail",
+                },
             ],
         }
 
