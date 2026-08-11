@@ -458,7 +458,10 @@ class _RichHooks:
 
         # Fallback index if unknown from id_map
         if pl_index is None:
-            pl_index = self._completed + 1
+            if self._n_entries and self._completed < self._n_entries:
+                pl_index = self._completed + 1
+            else:
+                pl_index = self._completed or 1
 
         # Fallback title lookup by index if video_id wasn't in id_map
         if not title:
@@ -503,7 +506,7 @@ class _RichHooks:
             uploader  = uploader or map_info.get("uploader") or ""
             pl_index  = pl_index or map_info.get("index")
 
-        if not pl_index and self._completed < (n_entries or 0):
+        if not pl_index and self._n_entries and self._completed < self._n_entries:
             pl_index = self._completed + 1
 
         if pl_index and not title:
@@ -550,7 +553,7 @@ class _RichHooks:
         uploader = ct.get("uploader") or ""
         n        = ct.get("n_entries") or self._n_entries
 
-        if not pl_index and self._completed < (n or 0):
+        if not pl_index and self._n_entries and self._completed < self._n_entries:
             pl_index = self._completed + 1
 
         if not title and pl_index:
@@ -560,8 +563,10 @@ class _RichHooks:
                     uploader = uploader or item.get("uploader") or ""
                     break
 
-        if not title:
-            title = f"Track {pl_index}" if pl_index else "Completed Track"
+        if not title or title == "Completed Track":
+            self._clear_tasks()
+            self._display.hide()
+            return
 
         if not failed:
             self._print_track_panel(
@@ -581,6 +586,8 @@ class _RichHooks:
 
     def _set_completed(self, n: int) -> None:
         """Advance the overall bar to exactly n if n > current completed."""
+        if self._n_entries and n > self._n_entries:
+            n = self._n_entries
         if n > self._completed:
             self._completed = n
             if self._overall_task is not None:
@@ -771,14 +778,27 @@ def download(
                     "key":          "FFmpegMetadata",
                     "add_metadata": True,
                 },
-                {"key": "EmbedThumbnail"},
+                {
+                    "key": "EmbedThumbnail",
+                    "already_have_thumbnail": False,
+                },
             ],
         }
 
-    with Live(display, console=console, refresh_per_second=15):
+    try:
         with YoutubeDL(options) as ydl:
-            ydl.download([url])
+            with Live(display, refresh_per_second=10, console=console):
+                ydl.download([url])
+    finally:
         hooks.finish()
+        # Clean up leftover standalone thumbnail files (.webp, .jpg, etc.)
+        if mode == "audio":
+            for ext in ("*.webp", "*.jpg", "*.jpeg", "*.png"):
+                for img_file in folder.glob(ext):
+                    try:
+                        img_file.unlink()
+                    except OSError:
+                        pass
 
 
 # ---------------------------------------------------------------------------
@@ -1092,7 +1112,9 @@ def main() -> None:
 
     banner = Text(justify="center")
     banner.append("▶  YouTube Downloader\n", style="bold magenta")
-    banner.append("Download videos & playlists as MP4 or MP3", style="dim white")
+    banner.append("Download videos & playlists as MP4 or MP3\n\n", style="dim white")
+    banner.append("Developed by ", style="dim white")
+    banner.append("Biswajit Basak", style="bold cyan")
     console.print(Panel(banner, border_style="magenta", padding=(1, 4)))
 
     hints = Table.grid(padding=(0, 2))

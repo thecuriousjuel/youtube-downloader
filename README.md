@@ -28,6 +28,42 @@ A feature-rich, visually appealing Command Line Interface (CLI) tool for downloa
 
 ---
 
+## 🔄 Application Workflow
+
+```mermaid
+flowchart TD
+    A["🚀 Launch CLI (`uv run main.py`)"] --> B["📥 Input: URL or `.txt` Batch File"]
+    B --> C{"Format Selection"}
+    C -->|"1"| D1["🎬 MP4 Video (Best Quality)"]
+    C -->|"2"| D2["🎵 MP3 Audio (VBR 0 + Metadata)"]
+    
+    D1 --> E["📁 Destination Folder Setup"]
+    D2 --> E
+    
+    E --> F["🔍 Archive Check (`.yt-archive.txt`)"]
+    F --> G{"Target Type"}
+    
+    G -->|"Single Video"| H1["Download to Target Folder"]
+    G -->|"Playlist"| H2["Create Playlist Subfolder"]
+    
+    H1 --> I["⚡ Download Execution"]
+    H2 --> I
+    
+    I --> J["Rich UI: Boxed Track Cards & Live Progress"]
+    J --> K{"Post-Processing"}
+    
+    K -->|"Audio (MP3)"| L1["FFmpeg Audio Extract + ID3 Metadata + Artwork Embed"]
+    K -->|"Video (MP4)"| L2["FFmpeg Stream Merge"]
+    
+    L1 --> M["🧹 Standalone Thumbnail Cleanup"]
+    L2 --> N["✅ Track Completed & Logged to Archive"]
+    M --> N
+    
+    N --> O["📊 Display Final Summary Table"]
+```
+
+---
+
 ## 🛠️ Prerequisites
 
 - **Python**: `3.10` or newer (Python `3.14` compatible)
